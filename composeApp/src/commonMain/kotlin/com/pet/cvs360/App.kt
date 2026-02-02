@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.pet.cvs360.feature.onboarding.sign_up.OnboardingViewModel
 import com.pet.cvs360.feature.onboarding.sign_up.RegisterScreen
 import org.jetbrains.compose.resources.painterResource
 
@@ -31,7 +32,8 @@ fun App() {
             modifier = Modifier
                 .fillMaxSize(),
         ) {
-            RegisterScreen()
+            val viewModel = OnboardingViewModel()
+            RegisterScreen(viewModel)
         }
     }
 }

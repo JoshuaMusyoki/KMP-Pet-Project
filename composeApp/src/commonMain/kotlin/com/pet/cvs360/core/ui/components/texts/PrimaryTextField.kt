@@ -1,4 +1,4 @@
-package com.pet.cvs360.core.ui.components
+package com.pet.cvs360.core.ui.components.texts
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding

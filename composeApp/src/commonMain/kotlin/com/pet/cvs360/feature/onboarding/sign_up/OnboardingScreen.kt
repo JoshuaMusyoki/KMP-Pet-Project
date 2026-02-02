@@ -10,32 +10,30 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.pet.cvs360.core.ui.components.PrimaryTextField
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pet.cvs360.core.ui.components.texts.PrimaryTextField
 import cvs360.composeapp.generated.resources.Res
 import cvs360.composeapp.generated.resources.compose_multiplatform
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun RegisterScreen(){
-
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var passwordsMatch by remember { mutableStateOf(true) }
+fun RegisterScreen(
+    viewModel: OnboardingViewModel
+){
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = Modifier
@@ -63,7 +61,7 @@ fun RegisterScreen(){
                 )
 
                 Text(
-                    text = "Sign Up For Free",
+                    text = "Welcome to SafiriTrack",
                     fontSize = 24.sp,
                     style = MaterialTheme.typography.titleLarge
                 )
@@ -72,8 +70,11 @@ fun RegisterScreen(){
             Spacer(modifier = Modifier.height(32.dp))
 
             PrimaryTextField(
-                value = email,
-                onValueChange = { email = it },
+                value = state.email,
+                onValueChange = {
+                    viewModel.onIntent(OnboardingIntent.EmailChanged(it))
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 label = "Email Address",
 
             )
@@ -81,23 +82,25 @@ fun RegisterScreen(){
             Spacer(modifier = Modifier.height(16.dp))
 
             PrimaryTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = "Password",
+                value = state.pin,
+                onValueChange = {
+                    viewModel.onIntent(OnboardingIntent.PinChanged(it))
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                label = "Create Pin/Password",
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             PrimaryTextField(
-                value = confirmPassword,
+                value = state.confirmPin,
                 onValueChange = {
-                    confirmPassword = it
-                    passwordsMatch = password == it
+                    viewModel.onIntent(OnboardingIntent.ConfirmPinChanged(it))
                 },
                 label = "Password Confirmation",
-                isError = !passwordsMatch
+                isError = !state.pinMatch
             )
-            if (!passwordsMatch) {
+            if (!state.pinMatch) {
                 Text(
                     text = "ERROR: Password do not match!",
                     color = MaterialTheme.colorScheme.error,
@@ -108,14 +111,22 @@ fun RegisterScreen(){
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = { /*TODO*/ },
+                onClick = {
+                    viewModel.onIntent(OnboardingIntent.SubmitLogin)
+                },
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .padding(horizontal = 16.dp)
                     .imePadding(),
-                enabled = passwordsMatch
-            ) {
-                Text(text = "Sign Up")
+                enabled = state.pinMatch && state.email.isNotEmpty() && !state.isLoading) {
+                if (state.isLoading){
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else {
+                    Text(text = "Create SafiriTrack Account")
+                }
             }
         }
     }
