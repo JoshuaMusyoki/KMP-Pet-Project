@@ -1,18 +1,27 @@
 package com.pet.cvs360.feature.onboarding.sign_up
 
-import androidx.compose.foundation.Image
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -20,46 +29,64 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import com.pet.cvs360.biometric.BioMetricUtil
+import com.pet.cvs360.biometric.BiometricAuthorizationViewModel
+import com.pet.cvs360.core.ui.components.pin_keypad.PinDots
+import com.pet.cvs360.core.ui.components.pin_keypad.PinKeyPad
 import com.pet.cvs360.core.ui.components.texts.PrimaryTextField
 import cvs360.composeapp.generated.resources.Res
-import cvs360.composeapp.generated.resources.compose_multiplatform
+import cvs360.composeapp.generated.resources.bike_lane
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun RegisterScreen(
-    viewModel: OnboardingViewModel
-){
+    viewModel: OnboardingViewModel,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
+    val isConfirming = state.pin.length == 4
+    val isComplete = state.pinMatch && state.confirmPin.length == 4
+    val showPinKeyPad = state.email.isNotEmpty() && !isComplete
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background
-    ){ paddingValues ->
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(paddingValues)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column (
-                modifier = Modifier
-                    .fillMaxWidth(),
+            // Header Section
+            Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
-            ){
-                Image(
-                    painter = painterResource(Res.drawable.compose_multiplatform),
+            ) {
+                Box(
                     modifier = Modifier
-                        .size(60.dp),
-                    contentDescription = null
-                )
-
+                        .size(100.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .border(
+                            4.dp,
+                            MaterialTheme.colorScheme.outline,
+                            RoundedCornerShape(16.dp)
+                        )
+                        .background(MaterialTheme.colorScheme.background),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.bike_lane),
+                        modifier = Modifier
+                            .size(60.dp),
+                        contentDescription = "Bike Lane"
+                    )
+                }
                 Text(
                     text = "Welcome to SafiriTrack",
                     fontSize = 24.sp,
@@ -67,65 +94,136 @@ fun RegisterScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            PrimaryTextField(
-                value = state.email,
-                onValueChange = {
-                    viewModel.onIntent(OnboardingIntent.EmailChanged(it))
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                label = "Email Address",
-
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            PrimaryTextField(
-                value = state.pin,
-                onValueChange = {
-                    viewModel.onIntent(OnboardingIntent.PinChanged(it))
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                label = "Create Pin/Password",
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            PrimaryTextField(
-                value = state.confirmPin,
-                onValueChange = {
-                    viewModel.onIntent(OnboardingIntent.ConfirmPinChanged(it))
-                },
-                label = "Password Confirmation",
-                isError = !state.pinMatch
-            )
-            if (!state.pinMatch) {
-                Text(
-                    text = "ERROR: Password do not match!",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+            // Input Section
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                PrimaryTextField(
+                    value = state.email,
+                    onValueChange = { viewModel.onIntent(OnboardingIntent.EmailChanged(it)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    label = "Email Address",
                 )
-            }
 
-            Spacer(modifier = Modifier.height(32.dp))
+                AnimatedContent(targetState = if (state.pin.length < 4) "Create PIN" else "Confirm PIN") { label ->
+                    Text(text = label, style = MaterialTheme.typography.titleMedium)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = {
-                    viewModel.onIntent(OnboardingIntent.SubmitLogin)
-                },
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .padding(horizontal = 16.dp)
-                    .imePadding(),
-                enabled = state.pinMatch && state.email.isNotEmpty() && !state.isLoading) {
-                if (state.isLoading){
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(24.dp)
+                PinDots(
+                    pin = if (state.pin.length < 4) state.pin else state.confirmPin,
+                    isError = !state.pinMatch && state.confirmPin.length == 4
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+                /*Spacer(modifier = Modifier.height(16.dp))
+                 //if (!isConfirming) {
+                    PrimaryTextField(
+                        value = state.pin,
+                        onValueChange = {},
+                        readOnly = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        label = "Create Pin",
                     )
-                } else {
-                    Text(text = "Create SafiriTrack Account")
+                //} else {
+                    PrimaryTextField(
+                        value = state.confirmPin,
+                        onValueChange = {},
+                        readOnly = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        label = "Pin Confirmation",
+                        isError = !state.pinMatch
+                    )
+                    if (!state.pinMatch && state.confirmPin.length == 4) {
+                        Text(
+                            text = "Error: Pins do not match!",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    //}
+                //}*/
+                // }
+
+                // Keypad Section (Fixed at bottom)
+                AnimatedVisibility(
+                    visible = showPinKeyPad,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                ) {
+                    PinKeyPad(
+                        isBiometricEnabled = state.isBiometricEnabled,
+                        onNumberClick = { digit ->
+                            if (!isConfirming) {
+                                if (state.pin.length < 4) viewModel.onIntent(
+                                    OnboardingIntent.PinChanged(
+                                        state.pin + digit
+                                    )
+                                )
+                            } else {
+                                if (state.confirmPin.length < 4) viewModel.onIntent(
+                                    OnboardingIntent.ConfirmPinChanged(state.confirmPin + digit)
+                                )
+                            }
+                        },
+                        onBackSpace = {
+                            if (isConfirming && state.confirmPin.isEmpty()) {
+                                // Logic to go back to editing the first PIN if empty
+                                viewModel.onIntent(
+                                    OnboardingIntent.PinChanged(
+                                        state.pin.dropLast(
+                                            1
+                                        )
+                                    )
+                                )
+                            } else if (isConfirming) {
+                                viewModel.onIntent(
+                                    OnboardingIntent.ConfirmPinChanged(
+                                        state.confirmPin.dropLast(
+                                            1
+                                        )
+                                    )
+                                )
+                            } else {
+                                viewModel.onIntent(
+                                    OnboardingIntent.PinChanged(
+                                        state.pin.dropLast(
+                                            1
+                                        )
+                                    )
+                                )
+                            }
+                        },
+                        onBiometricClick = { viewModel.onIntent(OnboardingIntent.BiometricLoginRequested) }
+                    )
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Action Button
+                AnimatedVisibility(visible = isComplete) {
+                    if (state.pinMatch && state.confirmPin.length == 4) {
+                        Button(
+                            onClick = {
+                                viewModel.onIntent(OnboardingIntent.SubmitLogin)
+                                      },
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .height(56.dp),
+                            enabled = state.pinMatch && state.confirmPin.length == 4 && state.email.isNotEmpty() && !state.isLoading
+                        ) {
+                            if (state.isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                Text(text = "Create SafiriTrack Account")
+                            }
+                        }
+                    }
                 }
             }
         }

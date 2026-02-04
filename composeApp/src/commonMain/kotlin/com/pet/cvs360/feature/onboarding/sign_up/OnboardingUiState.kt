@@ -5,6 +5,7 @@ data class OnboardingUiState(
     val email: String = "",
     val pin: String = "",
     val confirmPin: String = "",
+    val isBiometricEnabled: Boolean = false,
     val businessName: String = "",
     val tillNumber: String = "",
     val isLoading: Boolean = false,

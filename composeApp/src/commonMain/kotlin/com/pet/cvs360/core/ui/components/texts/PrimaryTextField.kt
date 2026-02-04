@@ -24,11 +24,13 @@ fun PrimaryTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     modifier: Modifier = Modifier,
-    isError: Boolean = false
+    isError: Boolean = false,
+    readOnly: Boolean = false
 ){
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
+        readOnly = readOnly,
         label = { Text(label) },
         leadingIcon = leadingIcon?.let {
             { Icon(imageVector = it, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }

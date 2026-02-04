@@ -38,6 +38,9 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.material.icons)
+            implementation(libs.androidx.biometric)
+            implementation(libs.navigation.compose)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -48,7 +51,12 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.font.awesome)
             implementation(projects.shared)
+            implementation(libs.voyager.navigator)
+            implementation(libs.voyager.screenModel)
+            implementation(libs.voyager.transitions)
+
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
